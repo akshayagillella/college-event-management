@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Event</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>Update College Event</h1>
+    <p>Edit the details of an existing event</p>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="list.html">All Events</a>
+    <a href="listOne.html">Find Event</a>
+    <a href="insert.html">Add Event</a>
+    <a href="update.html">Update Event</a>
+    <a href="delete.html">Delete Event</a>
+</nav>
+
+<main class="page-layout">
+    <section class="content">
+        <h2>Update Event Details</h2>
+
+        <form id="updateForm">
+            <label for="eventSelect">Select Event</label>
+            <select id="eventSelect" required>
+                <option value="">Loading events...</option>
+            </select>
+
+            <label for="event_name">Event Name</label>
+            <input type="text" id="event_name" maxlength="100" required>
+
+            <label for="event_date">Event Date</label>
+            <input type="date" id="event_date" required>
+
+            <label for="venue">Venue</label>
+            <input type="text" id="venue" maxlength="100" required>
+
+            <label for="description">Description</label>
+            <textarea id="description" maxlength="500"></textarea>
+
+            <button type="submit">Update Event</button>
+        </form>
+
+        <p id="message" aria-live="polite"></p>
+    </section>
+
+    <img class="page-image" src="images/update.jpg" alt="Update an Event">
+</main>
+
+<footer>College Event Management System</footer>
+
+<script>
+const eventSelect = document.getElementById('eventSelect');
+const message = document.getElementById('message');
+
+async function loadEvents() {
+    try {
+        const response = await fetch('/events');
+
+        if (!response.ok) {
+            throw new Error('Unable to load events');
+        }
+
+        const events = await response.json();
+        eventSelect.replaceChildren();
+
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = '-- Select an event --';
+        eventSelect.appendChild(first);
+
+        events.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.event_id;
+            option.textContent =
+                event.event_id + ' - ' + event.event_name;
+            eventSelect.appendChild(option);
+        });
+
+        if (events.length === 0) {
+            message.textContent = 'No events available to update.';
+        }
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+eventSelect.addEventListener('change', async function () {
+    message.textContent = '';
+
+    if (!this.value) return;
+
+    try {
+        const response = await fetch(
+            '/events/' + encodeURIComponent(this.value)
+        );
+        const event = await response.json();
+
+        if (!response.ok) {
+            throw new Error(event.message || 'Unable to load event');
+        }
+
+        document.getElementById('event_name').value = event.event_name;
+        document.getElementById('event_date').value =
+            String(event.event_date).slice(0, 10);
+        document.getElementById('venue').value = event.venue;
+        document.getElementById('description').value =
+            event.description || '';
+    } catch (error) {
+        message.textContent = error.message;
+    }
+});
+
+document.getElementById('updateForm').addEventListener(
+    'submit', async function (e) {
+        e.preventDefault();
+
+        const id = eventSelect.value;
+
+        if (!id) {
+            message.textContent = 'Please select an event.';
+            return;
+        }
+
+        const event = {
+            event_name: document.getElementById('event_name').value.trim(),
+            event_date: document.getElementById('event_date').value,
+            venue: document.getElementById('venue').value.trim(),
+            description: document.getElementById('description').value.trim()
+        };
+
+        try {
+            const response = await fetch(
+                '/events/' + encodeURIComponent(id),
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(event)
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Update failed');
+            }
+
+            message.textContent = data.message;
+            await loadEvents();
+            eventSelect.value = id;
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    }
+);
+
+loadEvents();
+</script>
+</body>
+</html>

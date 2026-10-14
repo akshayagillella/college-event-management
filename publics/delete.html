@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Event</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>Delete College Event</h1>
+    <p>Remove an event from the database</p>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="list.html">All Events</a>
+    <a href="listOne.html">Find Event</a>
+    <a href="insert.html">Add Event</a>
+    <a href="update.html">Update Event</a>
+    <a href="delete.html">Delete Event</a>
+</nav>
+
+<main class="page-layout">
+    <section class="content">
+        <h2>Select an Event to Delete</h2>
+
+        <form id="deleteForm">
+            <label for="eventSelect">Choose Event</label>
+            <select id="eventSelect" required>
+                <option value="">Loading events...</option>
+            </select>
+
+            <button type="submit" class="delete-button">
+                Delete Selected Event
+            </button>
+        </form>
+
+        <p id="message" aria-live="polite"></p>
+    </section>
+
+    <img class="page-image" src="images/delete.jpg" alt="Delete an Event">
+</main>
+
+<footer>College Event Management System</footer>
+
+<script>
+const eventSelect = document.getElementById('eventSelect');
+const message = document.getElementById('message');
+
+async function loadEvents() {
+    try {
+        const response = await fetch('/events');
+
+        if (!response.ok) {
+            throw new Error('Unable to load events');
+        }
+
+        const events = await response.json();
+        eventSelect.replaceChildren();
+
+        const first = document.createElement('option');
+        first.value = '';
+        first.textContent = '-- Select an event --';
+        eventSelect.appendChild(first);
+
+        events.forEach(event => {
+            const option = document.createElement('option');
+            option.value = event.event_id;
+            option.textContent =
+                event.event_id + ' - ' + event.event_name;
+            eventSelect.appendChild(option);
+        });
+
+        if (events.length === 0) {
+            message.textContent = 'There are no events to delete.';
+        }
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+document.getElementById('deleteForm').addEventListener(
+    'submit', async function (e) {
+        e.preventDefault();
+
+        const id = eventSelect.value;
+
+        if (!id) {
+            message.textContent = 'Please select an event.';
+            return;
+        }
+
+        const eventName =
+            eventSelect.options[eventSelect.selectedIndex].textContent;
+
+        if (!confirm('Are you sure you want to delete ' + eventName + '?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                '/events/' + encodeURIComponent(id),
+                { method: 'DELETE' }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Delete failed');
+            }
+
+            message.textContent = data.message;
+            await loadEvents();
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    }
+);
+
+loadEvents();
+</script>
+</body>
+</html>

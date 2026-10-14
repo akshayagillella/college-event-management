@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Event - College Event Management System</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .page-layout {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px #00000015;
+        }
+
+        .page-image {
+            flex: 1;
+            width: 45%;
+            max-width: 450px;
+            height: 350px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #insertForm button {
+            width: 100%;
+            margin: 15px 0 0;
+        }
+
+        #message {
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 700px) {
+            .page-layout {
+                flex-direction: column;
+            }
+
+            .page-image {
+                width: 100%;
+                max-width: none;
+                height: 240px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>College Event Management System</h1>
+    <p>Register an upcoming college event</p>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="list.html">All Events</a>
+    <a href="listOne.html">Find Event</a>
+    <a href="insert.html">Add Event</a>
+    <a href="update.html">Update Event</a>
+    <a href="delete.html">Delete Event</a>
+</nav>
+
+<main class="page-layout">
+
+    <section class="content">
+        <h2>Event Details</h2>
+
+        <form id="insertForm">
+
+            <label for="event_name">Event Name</label>
+            <input
+                type="text"
+                id="event_name"
+                maxlength="100"
+                placeholder="Enter event name"
+                required
+            >
+
+            <label for="event_date">Event Date</label>
+            <input
+                type="date"
+                id="event_date"
+                required
+            >
+
+            <label for="venue">Venue</label>
+            <input
+                type="text"
+                id="venue"
+                maxlength="100"
+                placeholder="Enter venue"
+                required
+            >
+
+            <label for="description">Description</label>
+            <textarea
+                id="description"
+                maxlength="500"
+                placeholder="Describe the event"
+            ></textarea>
+
+            <button type="submit" id="submitButton">
+                Add Event
+            </button>
+
+        </form>
+
+        <p id="message" aria-live="polite"></p>
+    </section>
+
+    <img
+        class="page-image"
+        src="images/add-event.jpg"
+        alt="College Event"
+    >
+
+</main>
+
+<footer>
+    <p>College Event Management System</p>
+</footer>
+
+<script>
+document.getElementById('insertForm').addEventListener(
+    'submit',
+    async function (e) {
+
+        e.preventDefault();
+
+        const event = {
+            event_name: document.getElementById('event_name').value.trim(),
+            event_date: document.getElementById('event_date').value,
+            venue: document.getElementById('venue').value.trim(),
+            description: document.getElementById('description').value.trim()
+        };
+
+        const message = document.getElementById('message');
+        const submitButton = document.getElementById('submitButton');
+
+        message.textContent = 'Adding event...';
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch('/events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(event)
+            });
+
+            const responseText = await response.text();
+
+            let data;
+
+            try {
+                data = JSON.parse(responseText);
+            } catch {
+                throw new Error(
+                    'Unexpected server response. Check your Node.js backend.'
+                );
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    'Server error: ' + response.status
+                );
+            }
+
+            message.textContent =
+                (data.message || 'Event added successfully!') +
+                (
+                    data.event_id !== undefined
+                    ? ' New event ID: ' + data.event_id
+                    : ''
+                );
+
+            this.reset();
+
+        } catch (error) {
+            message.textContent =
+                'Failed to add event: ' + error.message;
+
+            console.error('Add event error:', error);
+
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+);
+</script>
+
+</body>
+</html>

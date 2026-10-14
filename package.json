@@ -1,0 +1,12 @@
+{
+  "name": "college-management",
+  "version": "1.0.0",
+  "main": "app7a-0.js",
+  "scripts": {
+    "start": "node app7a-0.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mysql2": "^3.24.5"
+  }
+}
